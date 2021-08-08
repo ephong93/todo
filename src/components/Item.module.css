@@ -1,0 +1,14 @@
+.todo {
+    background-color: #ffffff;
+    display: block;
+    padding: 7px 10px;
+    height: 40px;
+    margin: 5px 5px;
+    border-radius: 3px;
+    box-shadow: 0 0 5px #dfdfdf;
+}
+
+.todo:hover {
+    background-color: #fcfcfc;
+    box-shadow: 0 0 5px #cecece;
+}
