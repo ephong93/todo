@@ -1,21 +1,45 @@
-import { Layout, Row, Col, Space, Divider, Input } from 'antd';
+import { Layout, Row, Col, Space, Divider } from 'antd';
 import { useState } from 'react';
-import ItemList from '../components/ItemList';
+import ToDoList from '../components/ToDoList';
+import DoneList from '../components/DoneList';
 
 const { Header, Content } = Layout;
 
-const toDoDataDummy = [
-    '저녁 만들기',
-    '장 보기',
-    '청소하기'
-];
-
-const doneDataDummy = [
-    '운동하기',
-    '설거지하기'
-];
-
 function Main() {
+    const [ inputValue, setInputValue ] = useState('');
+    const [ toDoList, setToDoList ] = useState('');
+    const [ doneList, setDoneList ] = useState('');
+
+    const changeInputValue = value => {
+        setInputValue(value);
+    }
+
+    const addToDoItem = value => {
+        setToDoList([value, ...toDoList]);
+    }
+
+    const addDoneItem = value => {
+        setDoneList([value, ...doneList]);
+    }
+
+    const completeItem = (value, index) => {
+        addDoneItem(value);
+        removeToDoItem(index);
+    }
+
+    const removeToDoItem = index => {
+        setToDoList(toDoList.filter((_value, _index) => _index !== index));
+    }
+
+    const removeDoneItem = index => {
+        setDoneList(doneList.filter((_value, _index) => _index !== index));
+    }
+
+    const restoreItem = (value, index) => {
+        addToDoItem(value);
+        removeDoneItem(index);
+    }
+
     return (
         <>
         <Layout>
@@ -28,13 +52,24 @@ function Main() {
                         <Space direction='vertical' size='large' style={{width: '100%'}}>
                             <div>
                                 <Divider orientation='left'>To do</Divider>
-                                <ItemList data={toDoDataDummy}>
-                                </ItemList>
+                                <ToDoList
+                                    itemList={toDoList}
+                                    inputValue={inputValue}
+                                    changeInputValue={changeInputValue}
+                                    addToDoItem={addToDoItem}
+                                    completeItem={completeItem}
+                                    removeToDoItem={removeToDoItem}
+                                >
+                                </ToDoList>
                             </div>
                             <div>
                                 <Divider orientation='left'>Done</Divider>
-                                <ItemList data={doneDataDummy}>
-                                </ItemList>
+                                <DoneList
+                                    itemList={doneList}
+                                    removeDoneItem={removeDoneItem}
+                                    restoreItem={restoreItem}
+                                >
+                                </DoneList>
                             </div>
                         </Space>
                     </Col>

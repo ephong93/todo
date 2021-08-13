@@ -1,14 +1,39 @@
-.todo {
+.item {
     background-color: #ffffff;
     display: block;
-    padding: 7px 10px;
-    height: 40px;
-    margin: 5px 5px;
     border-radius: 3px;
     box-shadow: 0 0 5px #dfdfdf;
+    margin: 10px 0;
 }
 
-.todo:hover {
+.item:hover {
     background-color: #fcfcfc;
     box-shadow: 0 0 5px #cecece;
+}
+
+input {
+    background: transparent;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    transition: border 0.2s;
+}
+
+input:hover {
+    border-bottom: 1px solid #cecece;
+}
+
+input:focus {
+    border-bottom: 1px solid #cecece;
+}
+
+.iconContainer {
+    position: absolute;
+    right: 20px;
+    top: 7px;
+    display: flex;
+}
+
+.icon {
+    cursor: pointer;
 }
