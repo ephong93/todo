@@ -1,5 +1,9 @@
 import { List } from 'antd';
 import style from './Item.module.css';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Item from './Item';
+
 
 function ToDoList(props) {
     return (
@@ -7,15 +11,14 @@ function ToDoList(props) {
             header={
                 <List.Item
                     actions={[
-                        <div 
+                        <FontAwesomeIcon
+                            icon={faPlus}
                             className={`${style.icon}`}
                             onClick={() => {
                                 props.addToDoItem(props.inputValue);
                                 props.changeInputValue('');
                             }}
-                        >
-                                +
-                        </div>
+                        />
                     ]}
                     className={`${style.item}`}>
                     <input onChange={e => props.changeInputValue(e.target.value)} value={props.inputValue}></input>
@@ -23,23 +26,21 @@ function ToDoList(props) {
             }
             dataSource={props.itemList}
             renderItem={(value, index) => 
-                <List.Item 
-                    actions={[
-                        <div 
-                            className={`${style.icon}`}
-                            onClick={() => props.removeToDoItem(index)}
-                        >
-                            -
-                        </div>,
-                        <div
-                            className={`${style.icon}`}
-                            onClick={() => props.completeItem(value, index)}
-                        >
-                            complete
-                        </div>
-                    ]} className={`${style.item}`}>
-                   { value }
-                </List.Item>
+                <Item icons={{complete: true, edit: true, remove: true}} value={value} key={index} index={index} 
+                    handleClick={icon => {
+                        switch (icon) {
+                            case 'complete':
+                                props.completeItem(value, index);
+                                break;
+                            case 'remove':
+                                props.removeToDoItem(index);
+                                break;
+                            default:
+                                break;
+                        }
+                    }}
+                    changeItem={props.changeToDoItem}
+                />
             }
         ></List>
     )

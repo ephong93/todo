@@ -40,6 +40,14 @@ function Main() {
         removeDoneItem(index);
     }
 
+    const changeToDoItem = (value, index) => {
+        setToDoList([...toDoList.slice(0, index), value, ...toDoList.slice(index+1)]);
+    }
+
+    const changeDoneItem = (value, index) => {
+        setDoneList([...doneList.slice(0, index), value, ...doneList.slice(index+1)]);
+    }
+
     return (
         <>
         <Layout>
@@ -59,6 +67,7 @@ function Main() {
                                     addToDoItem={addToDoItem}
                                     completeItem={completeItem}
                                     removeToDoItem={removeToDoItem}
+                                    changeToDoItem={changeToDoItem}
                                 >
                                 </ToDoList>
                             </div>
@@ -68,6 +77,7 @@ function Main() {
                                     itemList={doneList}
                                     removeDoneItem={removeDoneItem}
                                     restoreItem={restoreItem}
+                                    changeDoneItem={changeDoneItem}
                                 >
                                 </DoneList>
                             </div>

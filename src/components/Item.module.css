@@ -27,13 +27,6 @@ input:focus {
     border-bottom: 1px solid #cecece;
 }
 
-.iconContainer {
-    position: absolute;
-    right: 20px;
-    top: 7px;
-    display: flex;
-}
-
 .icon {
     cursor: pointer;
 }
