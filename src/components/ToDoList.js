@@ -15,6 +15,7 @@ function ToDoList(props) {
                             icon={faPlus}
                             className={`${style.icon}`}
                             onClick={() => {
+                                if (props.inputValue === '') return;
                                 props.addToDoItem(props.inputValue);
                                 props.changeInputValue('');
                             }}

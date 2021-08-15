@@ -2,16 +2,19 @@ import { faEdit, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import { faCheck, faRedoAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { List } from 'antd';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import style from './Item.module.css';
 
 function Item(props) {
     const [ isEditing, setIsEditing ] = useState(false);
     const [ editingValue, setEditingValue ] = useState('');
+    const inputRef = useRef(null);
 
     const startEditing = () => {
         setEditingValue(props.value);
         setIsEditing(true);
+        inputRef.current.hidden = false;
+        inputRef.current.focus();
     }
 
     const changeEditingValue = e => {
@@ -22,6 +25,7 @@ function Item(props) {
         setIsEditing(false);
         props.changeItem(editingValue, props.index);
         setEditingValue('');
+        inputRef.current.hidden = true;
     }
 
     const icons = [];
@@ -45,7 +49,8 @@ function Item(props) {
     return(
         <List.Item 
             actions={icons} className={`${style.item}`}>
-            { isEditing ? <input value={editingValue} onChange={changeEditingValue} onBlur={endEditing}></input> : props.value }
+            <input hidden value={editingValue} ref={inputRef} onChange={changeEditingValue} onBlur={endEditing}></input>
+            { !isEditing && props.value }
         </List.Item>
     );
 }

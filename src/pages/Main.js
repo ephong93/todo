@@ -2,6 +2,7 @@ import { Layout, Row, Col, Space, Divider } from 'antd';
 import { useState } from 'react';
 import ToDoList from '../components/ToDoList';
 import DoneList from '../components/DoneList';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
 
@@ -57,6 +58,20 @@ function Main() {
             <Content>
                 <Row>
                     <Col span={12} offset={6}>
+                        <LeftOutlined style={{
+                            position: 'absolute',
+                            top: '200px',
+                            left: '-30px',
+                            zIndex: 1,
+                            cursor: 'pointer'
+                        }}/>
+                        <RightOutlined style={{
+                            position: 'absolute',
+                            top: '200px',
+                            right: '-30px',
+                            zIndex: 1,
+                            cursor: 'pointer'
+                        }}/>
                         <Space direction='vertical' size='large' style={{width: '100%'}}>
                             <div>
                                 <Divider orientation='left'>To do</Divider>
