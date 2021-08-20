@@ -1,54 +1,127 @@
 import { List, Space, Divider } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import style from './Item.module.css';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Item from './Item';
 
+function ItemList() {
+    const [ inputValue, changeInputValue ] = useState('');
+    const [ itemList, setItemList ] = useState({});
 
-function ItemList(props) {
-    const [ inputValue, setInputValue ] = useState('');
-    const [ toDoList, setToDoList ] = useState('');
-    const [ doneList, setDoneList ] = useState('');
+    useEffect(() => {
+        const fetchItemList = async () => {
+            let res = await fetch('http://localhost:5000/api/todo',
+            {
+                method: 'GET',
+                credentials: 'include'
+            });
+            res = await res.json();
+            if (res.status === 'success') {
+                const _itemList = {};
+                res.data.forEach(data => {
+                    _itemList[data.id] = data;
+                });
+                setItemList(_itemList);
+            }
+        }
+        fetchItemList();
+    }, []);
 
-    const changeInputValue = value => {
-        setInputValue(value);
+    const toDoList = [];
+    const doneList = [];
+
+    for (let key in itemList) {
+        const item = itemList[key];
+        if (item.done) doneList.push(item);
+        else toDoList.push(item);
     }
 
-    const addToDoItem = value => {
-        setToDoList([value, ...toDoList]);
+    const sendItem = async (item, method) => {
+        let res = await fetch('http://localhost:5000/api/todo',
+        {
+            method: method,
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            },
+            body: JSON.stringify(item)
+        });
+        return res.json();
     }
 
-    const addDoneItem = value => {
-        setDoneList([value, ...doneList]);
+    const addItem = async (content, done) => {
+        const res = await sendItem({
+            id: null,
+            content: content, 
+            done: done
+        }, 'POST');
+        if (res.status === 'success') {
+            const itemId = res.data.id;
+            setItemList({...itemList,
+                [itemId]: res.data
+            });
+        }
     }
 
-    const completeItem = (value, index) => {
-        addDoneItem(value);
-        removeToDoItem(index);
+    const completeItem = async itemId => {
+        const item = itemList[itemId];
+        const res = await sendItem({
+            id: itemId,
+            content: item.content, 
+            done: true
+        }, 'PUT');
+        if (res.status === 'success') {
+            setItemList({...itemList,
+                [itemId]: {
+                    ...item,
+                    done: true
+                }
+            });
+        }
     }
 
-    const removeToDoItem = index => {
-        setToDoList(toDoList.filter((_value, _index) => _index !== index));
+    const restoreItem = async itemId => {
+        const item = itemList[itemId];
+        const res = await sendItem({
+            id: itemId,
+            content: item.content, 
+            done: false
+        }, 'POST');
+        if (res.status === 'success') {
+            setItemList({...itemList,
+                [itemId]: {
+                    ...item,
+                    done: false
+                }
+            });
+        }
     }
 
-    const removeDoneItem = index => {
-        setDoneList(doneList.filter((_value, _index) => _index !== index));
+    const removeItem = async itemId => {
+        const item = itemList[itemId];
+        const res = await sendItem(item, 'DELETE');
+        if (res.status === 'success') {
+            const _itemList = {...itemList};
+            delete _itemList[itemId];
+            setItemList(_itemList);
+        }
     }
 
-    const restoreItem = (value, index) => {
-        addToDoItem(value);
-        removeDoneItem(index);
+    const changeItem = async (itemId, content) => {
+        const item = itemList[itemId];
+        const newItem = {
+            id: itemId,
+            content: content,
+            done: item.done
+        }
+        const res = await sendItem(newItem, 'PUT');
+        if (res.status === 'success') {
+            setItemList({...itemList, 
+                [itemId]: newItem
+            });
+        }
     }
-
-    const changeToDoItem = (value, index) => {
-        setToDoList([...toDoList.slice(0, index), value, ...toDoList.slice(index+1)]);
-    }
-
-    const changeDoneItem = (value, index) => {
-        setDoneList([...doneList.slice(0, index), value, ...doneList.slice(index+1)]);
-    }
-
 
     return (
         <div style={{width: '95%', margin: 'auto'}}>
@@ -64,7 +137,7 @@ function ItemList(props) {
                                         className={`${style.icon}`}
                                         onClick={() => {
                                             if (inputValue === '') return;
-                                            addToDoItem(inputValue);
+                                            addItem(inputValue, false);
                                             changeInputValue('');
                                         }}
                                     />
@@ -74,21 +147,21 @@ function ItemList(props) {
                             </List.Item>
                         }
                         dataSource={toDoList}
-                        renderItem={(value, index) => 
-                            <Item icons={{complete: true, edit: true, remove: true}} value={value} key={index} index={index} 
+                        renderItem={item => 
+                            <Item icons={{complete: true, edit: true, remove: true}} value={item.content} key={item.id} index={item.id} 
                                 handleClick={icon => {
                                     switch (icon) {
                                         case 'complete':
-                                            completeItem(value, index);
+                                            completeItem(item.id);
                                             break;
                                         case 'remove':
-                                            removeToDoItem(index);
+                                            removeItem(item.id);
                                             break;
                                         default:
                                             break;
                                     }
                                 }}
-                                changeItem={changeToDoItem}
+                                changeItem={changeItem}
                             />
                         }
                     ></List>
@@ -97,28 +170,28 @@ function ItemList(props) {
                     <Divider orientation='left'>Done</Divider>
                     <List
                         dataSource={doneList}
-                        renderItem={(value, index) => 
-                            <Item icons={{restore: true, edit: true, remove: true}} value={value} key={index} index={index}
+                        renderItem={item => 
+                            <Item icons={{restore: true, edit: true, remove: true}} value={item.content} key={item.id} index={item.id}
                                 handleClick={icon => {
                                     switch (icon) {
                                         case 'restore':
-                                            restoreItem(value, index);
+                                            restoreItem(item.id);
                                             break;
                                         case 'remove':
-                                            removeDoneItem(index);
+                                            removeItem(item.id);
                                             break;
                                         default:
                                             break;
                                     }
                                 }}
-                                changeItem={changeDoneItem}
+                                changeItem={changeItem}
                             />
                         }
                     ></List>
                 </div>
             </Space>
         </div>
-    )
+    );
 }
 
 export default ItemList;

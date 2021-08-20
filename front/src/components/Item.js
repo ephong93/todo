@@ -23,7 +23,7 @@ function Item(props) {
 
     const endEditing = () => {
         setIsEditing(false);
-        props.changeItem(editingValue, props.index);
+        props.changeItem(props.index, editingValue);
         setEditingValue('');
         inputRef.current.hidden = true;
     }

@@ -111,7 +111,7 @@ def auth():
         }
     }
 
-@app.route('/api/todo', methods=['POST', 'GET', 'PUT'])
+@app.route('/api/todo', methods=['POST', 'GET', 'PUT', 'DELETE'])
 def todo():
     if 'user' not in session:
         return {
@@ -120,7 +120,7 @@ def todo():
         }
     from models import user_table, todo_table
     from db import engine
-    from sqlalchemy import select, insert, update
+    from sqlalchemy import select, insert, update, delete
     import json
 
     username = session['user']
@@ -129,7 +129,10 @@ def todo():
         with engine.connect() as conn:
             result = conn.execute(stmt).all()
             res = [{'id': row['id'], 'content': row['content'], 'datetime': row['datetime'].strftime('%Y-%m-%d-%H:%M:%S'), 'done': row['done']} for row in result]
-            return json.dumps(res)
+            return {
+                'status': 'success',
+                'data': res
+            }
 
     elif request.method == 'POST':
         req = request.get_json()
@@ -143,6 +146,14 @@ def todo():
         with engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
+        return {
+            'status': 'success',
+            'data': {
+                'id': result.lastrowid,
+                'content': content,
+                'done': False
+            }
+        }
 
     elif request.method == 'PUT':
         req = request.get_json()
@@ -155,6 +166,18 @@ def todo():
         content = req['content']
         done = req['done']
         stmt = update(todo_table).where(todo_table.c.id == todo_id).values(content=content, done=done)
+        with engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+    elif request.method == 'DELETE':
+        req = request.get_json()
+        if not request_includes(req, ['id']):
+            return {
+                'status': 'fail',
+                'data': 'Inappropriate request'
+            }
+        todo_id = req['id']
+        stmt = delete(todo_table).where(todo_table.c.id == todo_id)
         with engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
