@@ -105,6 +105,48 @@ def auth():
         }
     }
 
+@app.route('/api/todo', methods=['POST', 'GET'])
+def todo():
+    if 'user' not in session:
+        return {
+            'status': 'fail',
+            'data': 'Not authenticated'
+        }
+    from models import user_table, todo_table
+    from db import engine
+    from sqlalchemy import select, insert
+
+    username = session['user']
+    if request.method == 'GET':
+        stmt = select(user_table).where(user_table.c.username == username)
+        with engine.connect() as conn:
+            result = conn.execute(stmt).all()
+            user_id = result[0]['user_id']
+        print(user_id)
+
+        stmt = select(todo_table).where(todo_table.c.user_id == user_id)
+        with engine.connect() as conn:
+            result = conn.execute(stmt).all()
+            print(result)
+
+            import json
+
+            res = [{'content': row['content'], 'datetime': row['datetime'].strftime('%Y-%m-%d-%H:%M:%S'), 'done': row['done']} for row in result]
+            return json.dumps(res)
+
+
+    elif request.method == 'POST':
+        req = request.get_json()
+        content = req['content']
+        stmt = insert(todo_table).values(user_id=1, content=content, done=False)
+        with engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+    return {
+        'status': 'success'
+    }
+
 if __name__ == '__main__':
     from db import init_db
 
