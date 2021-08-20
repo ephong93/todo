@@ -11,6 +11,11 @@ def join():
     from db import engine
 
     req = request.get_json()
+    if not request_includes(req, ['username', 'password']):
+        return {
+            'status': 'fail',
+            'data': 'Inappropriate request'
+        }
     username, password = req['username'], req['password']
     stmt = insert(user_table).values(username=username, password=password)
     try:
@@ -26,12 +31,6 @@ def join():
             }
         }
 
-    ## for test
-    stmt = select(user_table)
-    with engine.connect() as conn:
-        result = conn.execute(stmt)
-        for row in result:
-            print(row)
     return {
         'status': 'success'
     }
@@ -50,6 +49,11 @@ def login():
             'data': 'Already logged in'
         }
     req = request.get_json()
+    if not request_includes(req, ['username', 'password']):
+        return {
+            'status': 'fail',
+            'data': 'Inappropriate request'
+        }
     username, password = req['username'], req['password']
     stmt = select(user_table).where(user_table.c.username==username).where(user_table.c.password==password)
     with engine.connect() as conn:
@@ -105,7 +109,7 @@ def auth():
         }
     }
 
-@app.route('/api/todo', methods=['POST', 'GET'])
+@app.route('/api/todo', methods=['POST', 'GET', 'PUT'])
 def todo():
     if 'user' not in session:
         return {
@@ -114,38 +118,54 @@ def todo():
         }
     from models import user_table, todo_table
     from db import engine
-    from sqlalchemy import select, insert
+    from sqlalchemy import select, insert, update
+    import json
 
     username = session['user']
     if request.method == 'GET':
-        stmt = select(user_table).where(user_table.c.username == username)
+        stmt = select(todo_table).where(user_table.c.username == username)
         with engine.connect() as conn:
             result = conn.execute(stmt).all()
-            user_id = result[0]['user_id']
-        print(user_id)
-
-        stmt = select(todo_table).where(todo_table.c.user_id == user_id)
-        with engine.connect() as conn:
-            result = conn.execute(stmt).all()
-            print(result)
-
-            import json
-
-            res = [{'content': row['content'], 'datetime': row['datetime'].strftime('%Y-%m-%d-%H:%M:%S'), 'done': row['done']} for row in result]
+            res = [{'id': row['id'], 'content': row['content'], 'datetime': row['datetime'].strftime('%Y-%m-%d-%H:%M:%S'), 'done': row['done']} for row in result]
             return json.dumps(res)
-
 
     elif request.method == 'POST':
         req = request.get_json()
         content = req['content']
+        if not request_includes(req, ['content']):
+            return {
+                'status': 'fail',
+                'data': 'Inappropriate request'
+            }
         stmt = insert(todo_table).values(user_id=1, content=content, done=False)
         with engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
 
+    elif request.method == 'PUT':
+        req = request.get_json()
+        if not request_includes(req, ['id', 'content', 'done']):
+            return {
+                'status': 'fail',
+                'data': 'Inappropriate request'
+            }
+        todo_id = req['id']
+        content = req['content']
+        done = req['done']
+        stmt = update(todo_table).where(todo_table.c.id == todo_id).values(content=content, done=done)
+        with engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+        
     return {
         'status': 'success'
     }
+
+
+def request_includes(req, keys):
+    if False in [k in req for k in keys]:
+        return False
+    return True
 
 if __name__ == '__main__':
     from db import init_db
