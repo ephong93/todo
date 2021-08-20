@@ -10,8 +10,8 @@ user_table = Table(
     'user',
     metadata,
     Column('id', Integer, primary_key=True),
-    Column('username', String(30), nullable=False),
-    Column('password', String(30))
+    Column('username', String(30), unique=True, nullable=False),
+    Column('password', String(30), nullable=False)
 )
 
 todo_table = Table(

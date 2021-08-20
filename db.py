@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from models import metadata
 
-engine = create_engine('sqlite+pysqlite:///:memory:', echo=True, future=True)
+engine = create_engine('sqlite:///db.sqlite3', echo=True, future=True)
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
