@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { Input, Button } from 'antd';
 import UserContext from '../UserContext';
-function Join() {
+function Join(props) {
     const [ username, setUsername ] = useState('');
     const [ password, setPassword ] = useState('');
+    const [ errorMessage, setErrorMessage ]=  useState(null);
+    const history = useHistory();
 
     return (
         <UserContext.Consumer>
@@ -12,7 +14,16 @@ function Join() {
                 <div>
                     <Input value={username} onChange={e => { setUsername(e.target.value) }} />
                     <Input value={password} onChange={e => { setPassword(e.target.value) }} />
-                    <Button type='primary' onClick={() => join(username, password)}>Join</Button>
+                    { errorMessage && <div>{errorMessage}</div>}
+                    <Button type='primary' onClick={() => {
+                        const res = join(username, password);
+                        if (res.status === 'success') {
+                            history.push('/login');
+                        } else {
+                            setErrorMessage('회원가입 실패');
+                        }
+                        console.log(res);
+                    }}>Join</Button>
                     <Link to='/login'>로그인</Link>
                 </div>
             }

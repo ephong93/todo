@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { useState } from 'react';
+import { BrowserRouter as Router, Switch } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import AuthRoute from './AuthRoute';
+import NotAuthRoute from './NotAuthRoute';
 import Main from './pages/Main';
 import Login from './pages/Login';
 import Join from './pages/Join';
@@ -10,9 +11,25 @@ import './App.less';
 
 function App() {
   const [ user, setUser ] = useState(null);
-  const authenticated = false;
+  const authenticated = user !== null;
 
-  const login = (username, password) => {
+  useEffect(async () => {
+    async function auth() {
+      let res = await fetch('http://localhost:5000/api/auth',
+      {
+          method: 'GET',
+          credentials: 'include'
+      });
+      res = await res.json();
+      if (res.status === 'success') {
+        setUser(res.data.user);
+      }
+    }
+    auth();
+  }, []);
+
+
+  const login = async (username, password) => {
     let res = await fetch('http://localhost:5000/api/login',
     {
         method: 'POST',
@@ -26,9 +43,13 @@ function App() {
         })
     });
     res = await res.json();
+    if (res.status === 'success') {
+      setUser(res.data.user);
+    }
+    return res;
   }
 
-  const logout = () => {
+  const logout = async () => {
     let res = await fetch('http://localhost:5000/api/logout',
     {
         method: 'POST',
@@ -38,6 +59,11 @@ function App() {
         credentials: 'include'
     });
     res = await res.json();
+    if (res.status === 'success') {
+      setUser(null);
+    } else if (res.data === 'Already logged out') {
+      setUser(null);
+    }
   }
 
   const join = async (username, password) => {
@@ -53,8 +79,7 @@ function App() {
             password: password
         })
     });
-    res = await res.json();
-    console.log(res);
+    return res.json();
   }
 
   return (
@@ -64,18 +89,13 @@ function App() {
       logout: logout,
       join: join
     }}>
+
       <Router>
         <Switch>
-          <Route path='/login'>
-            <Login />
-          </Route>
-          <Route path='/join'>
-            <Join />
-          </Route>
-          <Route path='/'>
-            <Enter />
-          </Route>
-          <AuthRoute authenticated={authenticated} render={() => <Main/>} path='/' />
+          <AuthRoute authenticated={authenticated} render={() => <Main/>} path='/main' />
+          <NotAuthRoute authenticated={authenticated} render={() => <Login />} path='/login' />
+          <NotAuthRoute authenticated={authenticated} render={() => <Join />} path='/join' />
+          <NotAuthRoute authenticated={authenticated} render={() => <Enter />} path='/' />
         </Switch>
       </Router>
     </UserContext.Provider>

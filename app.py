@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, session
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='front/build/static', template_folder='front/build')
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 app.config['SECRET_KEY'] = 'mysecretkey123@321'
 
 @app.route('/api/join', methods=['POST'])
