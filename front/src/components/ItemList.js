@@ -5,27 +5,28 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Item from './Item';
 
-function ItemList() {
+function ItemList(props) {
     const [ inputValue, changeInputValue ] = useState('');
     const [ itemList, setItemList ] = useState({});
 
-    useEffect(() => {
-        const fetchItemList = async () => {
-            let res = await fetch('http://localhost:5000/api/todo',
-            {
-                method: 'GET',
-                credentials: 'include'
+    const fetchItemList = async (params) => {
+        let res = await fetch('http://localhost:5000/api/todo' + new URLSearchParams(params),
+        {
+            method: 'GET',
+            credentials: 'include'
+        });
+        res = await res.json();
+        if (res.status === 'success') {
+            const _itemList = {};
+            res.data.forEach(data => {
+                _itemList[data.id] = data;
             });
-            res = await res.json();
-            if (res.status === 'success') {
-                const _itemList = {};
-                res.data.forEach(data => {
-                    _itemList[data.id] = data;
-                });
-                setItemList(_itemList);
-            }
+            setItemList(_itemList);
         }
-        fetchItemList();
+    }
+
+    useEffect(() => {
+        fetchItemList(props.date);
     }, []);
 
     const toDoList = [];
@@ -54,7 +55,8 @@ function ItemList() {
         const res = await sendItem({
             id: null,
             content: content, 
-            done: done
+            done: done,
+            date: props.date
         }, 'POST');
         if (res.status === 'success') {
             const itemId = res.data.id;
@@ -69,7 +71,8 @@ function ItemList() {
         const res = await sendItem({
             id: itemId,
             content: item.content, 
-            done: true
+            done: true,
+            date: props.date
         }, 'PUT');
         if (res.status === 'success') {
             setItemList({...itemList,
@@ -86,7 +89,8 @@ function ItemList() {
         const res = await sendItem({
             id: itemId,
             content: item.content, 
-            done: false
+            done: false,
+            date: props.date
         }, 'POST');
         if (res.status === 'success') {
             setItemList({...itemList,
@@ -113,7 +117,8 @@ function ItemList() {
         const newItem = {
             id: itemId,
             content: content,
-            done: item.done
+            done: item.done,
+            date: props.date
         }
         const res = await sendItem(newItem, 'PUT');
         if (res.status === 'success') {
@@ -125,6 +130,9 @@ function ItemList() {
 
     return (
         <div style={{width: '95%', margin: 'auto'}}>
+            <div>
+                {props.date.year + '-' + props.date.month + '-' + props.date.day}
+            </div>
             <Space direction='vertical' size='large' style={{width: '100%'}}>
                 <div style={{width: 'auto'}}>
                     <Divider orientation='left'>To do</Divider>

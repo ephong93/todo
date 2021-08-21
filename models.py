@@ -1,5 +1,5 @@
 from sqlalchemy import MetaData
-from sqlalchemy import Table, Column, Integer, String, Boolean, Text, DateTime
+from sqlalchemy import Table, Column, Integer, String, Boolean, Text, Date
 from sqlalchemy import ForeignKey
 from sqlalchemy import create_engine
 import datetime
@@ -20,7 +20,7 @@ todo_table = Table(
     Column('id', Integer, primary_key=True),
     Column('user_id', ForeignKey('user.id'), nullable=False),
     Column('content', Text, nullable=False),
-    Column('datetime', DateTime, default=datetime.datetime.utcnow, nullable=False),
+    Column('date', Date, nullable=False),
     Column('done', Boolean, nullable=False)
 )
 

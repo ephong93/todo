@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, session
 from flask_cors import CORS
+import datetime
+
 
 app = Flask(__name__, static_folder='front/build/static', template_folder='front/build')
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
@@ -121,14 +123,16 @@ def todo():
     from models import user_table, todo_table
     from db import engine
     from sqlalchemy import select, insert, update, delete
-    import json
 
     username = session['user']
     if request.method == 'GET':
-        stmt = select(todo_table).where(user_table.c.username == username)
+        year = request.args.get('year')
+        month = request.args.get('month')
+        day = request.args.get('day')
+        stmt = select(todo_table).where(user_table.c.username == username and user_table.c.date == datetime.date(year, month, day))
         with engine.connect() as conn:
             result = conn.execute(stmt).all()
-            res = [{'id': row['id'], 'content': row['content'], 'datetime': row['datetime'].strftime('%Y-%m-%d-%H:%M:%S'), 'done': row['done']} for row in result]
+            res = [{'id': row['id'], 'content': row['content'], 'done': row['done']} for row in result]
             return {
                 'status': 'success',
                 'data': res
@@ -136,13 +140,14 @@ def todo():
 
     elif request.method == 'POST':
         req = request.get_json()
+        date = req['date']
         content = req['content']
         if not request_includes(req, ['content']):
             return {
                 'status': 'fail',
                 'data': 'Inappropriate request'
             }
-        stmt = insert(todo_table).values(user_id=1, content=content, done=False)
+        stmt = insert(todo_table).values(user_id=1, content=content, done=False, date=datetime.date(date['year'], date['month'], date['day']))
         with engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
@@ -165,7 +170,8 @@ def todo():
         todo_id = req['id']
         content = req['content']
         done = req['done']
-        stmt = update(todo_table).where(todo_table.c.id == todo_id).values(content=content, done=done)
+        date = req['date']
+        stmt = update(todo_table).where(todo_table.c.id == todo_id).values(content=content, done=done, date=datetime.date(date['year'], date['month'], date['day']))
         with engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
