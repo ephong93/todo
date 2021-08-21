@@ -122,14 +122,14 @@ def todo():
         }
     from models import user_table, todo_table
     from db import engine
-    from sqlalchemy import select, insert, update, delete
+    from sqlalchemy import select, insert, update, delete, and_
 
     username = session['user']
     if request.method == 'GET':
-        year = request.args.get('year')
-        month = request.args.get('month')
-        day = request.args.get('day')
-        stmt = select(todo_table).where(user_table.c.username == username and user_table.c.date == datetime.date(year, month, day))
+        year = int(request.args.get('year'))
+        month = int(request.args.get('month'))
+        day = int(request.args.get('day'))
+        stmt = select(todo_table).where(and_(user_table.c.username == username, todo_table.c.date == datetime.date(year, month, day)))
         with engine.connect() as conn:
             result = conn.execute(stmt).all()
             res = [{'id': row['id'], 'content': row['content'], 'done': row['done']} for row in result]

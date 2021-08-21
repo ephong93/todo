@@ -10,7 +10,7 @@ function ItemList(props) {
     const [ itemList, setItemList ] = useState({});
 
     const fetchItemList = async (params) => {
-        let res = await fetch('http://localhost:5000/api/todo' + new URLSearchParams(params),
+        let res = await fetch('http://localhost:5000/api/todo?' + new URLSearchParams(params),
         {
             method: 'GET',
             credentials: 'include'
@@ -21,13 +21,14 @@ function ItemList(props) {
             res.data.forEach(data => {
                 _itemList[data.id] = data;
             });
+            console.log(params, _itemList);
             setItemList(_itemList);
         }
     }
 
     useEffect(() => {
         fetchItemList(props.date);
-    }, []);
+    }, [props.date]);
 
     const toDoList = [];
     const doneList = [];
