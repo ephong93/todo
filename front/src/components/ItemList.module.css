@@ -1,0 +1,17 @@
+.main {
+    width: 95%;
+    margin: auto
+}
+
+.date {
+    text-align: center;
+    padding: 10px;
+}
+
+.item-list-container {
+    width: 100%;
+}
+
+.space {
+    width: 100%;
+}

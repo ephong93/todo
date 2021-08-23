@@ -1,19 +1,25 @@
 import { BrowserRouter as Router, Switch } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Layout } from 'antd';
 import AuthRoute from './AuthRoute';
 import NotAuthRoute from './NotAuthRoute';
 import Main from './pages/Main';
 import Login from './pages/Login';
 import Join from './pages/Join';
 import Enter from './pages/Enter';
+import HeaderBar from './components/HeaderBar';
 import UserContext from './UserContext';
 import './App.less';
+
+const { Header, Content } = Layout;
+
 
 function App() {
   const [ user, setUser ] = useState(null);
   const authenticated = user !== null;
 
-  useEffect(async () => {
+
+  useEffect(() => {
     async function auth() {
       let res = await fetch('http://localhost:5000/api/auth',
       {
@@ -61,8 +67,10 @@ function App() {
     res = await res.json();
     if (res.status === 'success') {
       setUser(null);
+      return res;
     } else if (res.data === 'Already logged out') {
       setUser(null);
+      return res;
     }
   }
 
@@ -79,7 +87,8 @@ function App() {
             password: password
         })
     });
-    return res.json();
+    res = await res.json();
+    return res;
   }
 
   return (
@@ -89,16 +98,24 @@ function App() {
       logout: logout,
       join: join
     }}>
-
       <Router>
-        <Switch>
-          <AuthRoute authenticated={authenticated} render={() => <Main/>} path='/main' />
-          <NotAuthRoute authenticated={authenticated} render={() => <Login />} path='/login' />
-          <NotAuthRoute authenticated={authenticated} render={() => <Join />} path='/join' />
-          <NotAuthRoute authenticated={authenticated} render={() => <Enter />} path='/' />
-        </Switch>
+        <Layout>
+            <Header>
+              <HeaderBar />
+            </Header>
+            <Content>
+              <Switch>
+                <AuthRoute authenticated={authenticated} render={() => <Main/>} path='/main' />
+                <NotAuthRoute authenticated={authenticated} render={() => <Login />} path='/login' />
+                <NotAuthRoute authenticated={authenticated} render={() => <Join />} path='/join' />
+                <NotAuthRoute authenticated={authenticated} render={() => <Enter />} path='/' />
+              </Switch>
+          </Content>
+        </Layout>
       </Router>
     </UserContext.Provider>
+
+    
   );
 }
 

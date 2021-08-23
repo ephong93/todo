@@ -1,6 +1,7 @@
 import { List, Space, Divider } from 'antd';
 import { useEffect, useState } from 'react';
-import style from './Item.module.css';
+import itemStyle from './Item.module.css';
+import itemListStyle from './ItemList.module.css';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Item from './Item';
@@ -130,12 +131,12 @@ function ItemList(props) {
     }
 
     return (
-        <div style={{width: '95%', margin: 'auto'}}>
-            <div>
+        <div className={`${itemListStyle.main}`}>
+            <div className={`${itemListStyle.date}`}>
                 {props.date.year + '-' + props.date.month + '-' + props.date.day}
             </div>
-            <Space direction='vertical' size='large' style={{width: '100%'}}>
-                <div style={{width: 'auto'}}>
+            <Space direction='vertical' size='large' className={`${itemListStyle.space}`}>
+                <div className={`${itemListStyle.itemListContainer}`}>
                     <Divider orientation='left'>To do</Divider>
                     <List
                         header={
@@ -143,7 +144,7 @@ function ItemList(props) {
                                 actions={[
                                     <FontAwesomeIcon
                                         icon={faPlus}
-                                        className={`${style.icon}`}
+                                        className={`${itemStyle.icon}`}
                                         onClick={() => {
                                             if (inputValue === '') return;
                                             addItem(inputValue, false);
@@ -151,7 +152,7 @@ function ItemList(props) {
                                         }}
                                     />
                                 ]}
-                                className={`${style.item}`}>
+                                className={`${itemStyle.item}`}>
                                 <input onChange={e => changeInputValue(e.target.value)} value={inputValue}></input>
                             </List.Item>
                         }
@@ -175,7 +176,7 @@ function ItemList(props) {
                         }
                     ></List>
                 </div>
-                <div style={{width: '100%'}}>
+                <div className={`${itemListStyle.itemListContainer}`}>
                     <Divider orientation='left'>Done</Divider>
                     <List
                         dataSource={doneList}
