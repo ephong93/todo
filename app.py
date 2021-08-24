@@ -33,7 +33,7 @@ def login():
 
     from commands import user_select
     try:
-        data = analyze_request(request, 'POST', ['usename', 'password'])
+        data = analyze_request(request, 'POST', ['username', 'password'])
         users = user_select(data)
         if len(users) == 0:
             return {
