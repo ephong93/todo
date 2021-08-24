@@ -1,7 +1,6 @@
+from commands import analyze_request
 from flask import Flask, render_template, request, session
 from flask_cors import CORS
-import datetime
-
 
 app = Flask(__name__, static_folder='front/build/static', template_folder='front/build')
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
@@ -9,42 +8,21 @@ app.config['SECRET_KEY'] = 'mysecretkey123@321'
 
 @app.route('/api/join', methods=['POST'])
 def join():
-    from models import user_table
-    from sqlalchemy import insert, select
-    from sqlalchemy.exc import IntegrityError
-    from db import engine
-
-    req = request.get_json()
-    if not request_includes(req, ['username', 'password']):
-        return {
-            'status': 'fail',
-            'data': 'Inappropriate request'
-        }
-    username, password = req['username'], req['password']
-    stmt = insert(user_table).values(username=username, password=password)
+    from commands import user_insert
     try:
-        with engine.connect() as conn:
-            result = conn.execute(stmt)
-            print(result)
-            conn.commit()
-    except IntegrityError:
+        data = analyze_request(request, 'POST', ['username', 'password'])
+        user_insert(data)
         return {
-            'status': 'fail',
-            'data': {
-                'username': 'Duplicated username'
-            }
+            'status': 'success'
+        }
+    except:
+        return {
+            'status': 'fail'
         }
 
-    return {
-        'status': 'success'
-    }
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    from models import user_table
-    from sqlalchemy import insert, select
-    from sqlalchemy.exc import IntegrityError
-    from db import engine
     from models import user_table
 
     if 'user' in session:
@@ -52,28 +30,23 @@ def login():
             'status': 'fail',
             'data': 'Already logged in'
         }
-    req = request.get_json()
-    if not request_includes(req, ['username', 'password']):
-        return {
-            'status': 'fail',
-            'data': 'Inappropriate request'
-        }
-    username, password = req['username'], req['password']
-    stmt = select(user_table).where(user_table.c.username==username).where(user_table.c.password==password)
-    with engine.connect() as conn:
-        result = conn.execute(stmt).all()
-        if len(result) == 0:
+
+    from commands import user_select
+    try:
+        data = analyze_request(request, 'POST', ['usename', 'password'])
+        users = user_select(data)
+        if len(users) == 0:
             return {
                 'status': 'fail',
                 'data': 'Incorrrect username or password'
             }
-        if len(result) > 1:
+        if len(users) > 1:
             return {
                 'status': 'fail',
                 'data': 'Unknown'
             }
-        result = result[0]
-        username = result['username']
+        user = users[0]
+        username = user['username']
         session['user'] = username
         return {
             'status': 'success',
@@ -81,6 +54,11 @@ def login():
                 'user': username
             }
         }
+    except:
+        return {
+            'status': 'fail'
+        }
+    
    
 @app.route('/api/logout', methods=['POST'])
 def logout():
@@ -120,77 +98,32 @@ def todo():
             'status': 'fail',
             'data': 'Not authenticated'
         }
-    from models import user_table, todo_table
-    from db import engine
-    from sqlalchemy import select, insert, update, delete, and_
 
-    username = session['user']
-    if request.method == 'GET':
-        year = int(request.args.get('year'))
-        month = int(request.args.get('month'))
-        day = int(request.args.get('day'))
-        stmt = select(todo_table).where(and_(user_table.c.username == username, todo_table.c.date == datetime.date(year, month, day)))
-        with engine.connect() as conn:
-            result = conn.execute(stmt).all()
-            res = [{'id': row['id'], 'content': row['content'], 'done': row['done']} for row in result]
-            return {
-                'status': 'success',
-                'data': res
-            }
-
-    elif request.method == 'POST':
-        req = request.get_json()
-        date = req['date']
-        content = req['content']
-        if not request_includes(req, ['content']):
-            return {
-                'status': 'fail',
-                'data': 'Inappropriate request'
-            }
-        stmt = insert(todo_table).values(user_id=1, content=content, done=False, date=datetime.date(date['year'], date['month'], date['day']))
-        with engine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
+    from commands import todo_select, todo_delete, todo_insert, todo_update, get_user_id
+    try:
+        username = session['user']
+        user_id = get_user_id(username)
+        if request.method == 'GET':
+            data = analyze_request(request, 'GET', ['year', 'month', 'day'])
+            res = todo_select(user_id, data)
+        elif request.method == 'POST':
+            data = analyze_request(request, 'POST', ['date', 'content'])
+            res = todo_insert(user_id, data)
+        elif request.method == 'PUT':
+            data = analyze_request(request, 'PUT', ['id', 'content', 'done', 'date'])
+            res = todo_update(data)
+        elif request.method == 'DELETE':
+            data = analyze_request(request, 'DELETE', ['id'])
+            res = todo_delete(data)
         return {
             'status': 'success',
-            'data': {
-                'id': result.lastrowid,
-                'content': content,
-                'done': False
-            }
+            'data': res
         }
-
-    elif request.method == 'PUT':
-        req = request.get_json()
-        if not request_includes(req, ['id', 'content', 'done']):
-            return {
-                'status': 'fail',
-                'data': 'Inappropriate request'
-            }
-        todo_id = req['id']
-        content = req['content']
-        done = req['done']
-        date = req['date']
-        stmt = update(todo_table).where(todo_table.c.id == todo_id).values(content=content, done=done, date=datetime.date(date['year'], date['month'], date['day']))
-        with engine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-    elif request.method == 'DELETE':
-        req = request.get_json()
-        if not request_includes(req, ['id']):
-            return {
-                'status': 'fail',
-                'data': 'Inappropriate request'
-            }
-        todo_id = req['id']
-        stmt = delete(todo_table).where(todo_table.c.id == todo_id)
-        with engine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-        
-    return {
-        'status': 'success'
-    }
+    except Exception as e:
+        print(e)
+        return {
+            'status': 'fail'
+        }
 
 
 def request_includes(req, keys):
